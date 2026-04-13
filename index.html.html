@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Command Center — 5 Hunter Cir</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #1B3A5C; --navy-lt: #E8EEF5; --gold: #C8860A; --gold-lt: #FEF3E2;
+    --slate: #2C3E50; --teal: #0F7B6C; --teal-lt: #E6F4F1;
+    --red: #C0392B; --red-lt: #FDEDEC; --green: #1E7E34; --green-lt: #EAFAF1;
+    --amber: #D68910; --amber-lt: #FEF9E7; --purple: #6C3483; --purple-lt: #F5EEF8;
+    --bg: #F4F5F7; --surface: #FFFFFF; --surface2: #F8F9FA;
+    --border: #DEE2E6; --text: #212529; --text2: #495057; --text3: #868E96;
+    --ff: Georgia, 'Times New Roman', serif;
+    --ffm: 'Courier New', Courier, monospace;
+  }
+  body { font-family: var(--ff); background: var(--bg); color: var(--text); font-size: 14px; }
+  
+  /* Layout */
+  #app { display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { background: var(--navy); color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar-title { font-size: 16px; font-weight: 500; }
+  .topbar-sub { font-size: 11px; opacity: 0.6; margin-top: 2px; }
+  .nav { display: flex; background: var(--surface2); border-bottom: 1px solid var(--border); padding: 0 16px; overflow-x: auto; }
+  .nav-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: 10px 16px; font-size: 12px; font-family: var(--ffm); letter-spacing: 0.05em; cursor: pointer; color: var(--text3); white-space: nowrap; transition: color 0.15s; }
+  .nav-btn.active { color: var(--navy); border-bottom-color: var(--gold); }
+  .nav-btn:hover:not(.active) { color: var(--text); }
+  .content { flex: 1; padding: 20px; overflow-y: auto; }
+  .hidden { display: none !important; }
+
+  /* Cards & Sections */
+  .kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .kpi-val { font-size: 24px; font-weight: 500; }
+  .kpi-label { font-size: 10px; color: var(--text3); margin-top: 3px; letter-spacing: 0.08em; text-transform: uppercase; font-family: var(--ffm); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+  .section-hdr { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .section-title { font-size: 11px; font-family: var(--ffm); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 8px 12px; text-align: left; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; font-family: var(--ffm); color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 500; white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface2); }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: var(--ffm); font-weight: 500; }
+  .b-ip { background: var(--amber-lt); color: var(--amber); }
+  .b-done { background: var(--green-lt); color: var(--green); }
+  .b-ns { background: #F1F3F5; color: var(--text3); }
+  .b-blocked { background: var(--red-lt); color: var(--red); }
+  .b-hold { background: var(--purple-lt); color: var(--purple); }
+  .pri-high { color: var(--red); font-weight: 500; }
+  .pri-med { color: var(--amber); font-weight: 500; }
+  .pri-low { color: var(--green); font-weight: 500; }
+
+  /* Buttons */
+  .btn { padding: 7px 14px; border-radius: 6px; border: 1px solid var(--border); background: none; cursor: pointer; font-size: 12px; font-family: var(--ffm); color: var(--text); transition: opacity 0.1s; }
+  .btn:hover { opacity: 0.75; }
+  .btn-primary { background: var(--navy); color: white; border-color: var(--navy); }
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+  .btn-danger { background: var(--red-lt); color: var(--red); border-color: var(--red); }
+  .btn-ghost { background: rgba(255,255,255,0.15); color: white; border-color: rgba(255,255,255,0.3); }
+
+  /* Forms */
+  .form-field { margin-bottom: 14px; }
+  .form-label { font-size: 11px; color: var(--text3); display: block; margin-bottom: 5px; font-family: var(--ffm); letter-spacing: 0.05em; text-transform: uppercase; }
+  input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--surface); color: var(--text); font-family: var(--ff); }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 2px rgba(27,58,92,0.1); }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  
+  /* Room pills */
+  .room-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .room-pill { padding: 3px 10px; border-radius: 20px; font-size: 11px; border: 1px solid var(--border); cursor: pointer; background: var(--surface); color: var(--text3); transition: all 0.1s; }
+  .room-pill.sel { background: var(--navy); color: white; border-color: var(--navy); }
+
+  /* Modal */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .modal { background: var(--surface); border-radius: 12px; padding: 24px; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); }
+  .modal-title { font-size: 16px; font-weight: 500; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); align-items: center; }
+
+  /* Chat */
+  .chat-wrap { display: flex; flex-direction: column; height: calc(100vh - 150px); min-height: 400px; }
+  .chat-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 88%; }
+  .msg-user { align-self: flex-end; }
+  .msg-ai { align-self: flex-start; }
+  .msg-bubble { padding: 10px 14px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+  .msg-user .msg-bubble { background: var(--navy); color: white; border-radius: 12px 12px 3px 12px; }
+  .msg-ai .msg-bubble { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px 12px 12px 3px; }
+  .chat-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chat-sug { padding: 4px 12px; border-radius: 20px; font-size: 11px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; color: var(--text3); }
+  .chat-sug:hover { background: var(--navy-lt); color: var(--navy); }
+  .chat-input-area { padding: 10px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; background: var(--surface); flex-shrink: 0; }
+  .chat-input { flex: 1; padding: 9px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 13px; background: var(--surface2); resize: none; max-height: 100px; font-family: var(--ff); }
+  .send-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--navy); border: none; cursor: pointer; color: white; font-size: 14px; align-self: flex-end; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .send-btn:disabled { opacity: 0.4; }
+  .typing-dots { display: flex; gap: 4px; align-items: center; padding: 10px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px 12px 12px 3px; width: fit-content; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+  /* Days chip */
+  .chip { font-size: 11px; font-family: var(--ffm); padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+  .chip-over { background: var(--red-lt); color: var(--red); }
+  .chip-soon { background: var(--amber-lt); color: var(--amber); }
+  .chip-ok { background: var(--green-lt); color: var(--green); }
+
+  /* Misc */
+  .empty { padding: 32px; text-align: center; color: var(--text3); font-size: 13px; }
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; background: var(--navy-lt); color: var(--navy); margin: 1px; font-family: var(--ffm); }
+  .mono { font-family: var(--ffm); }
+  .muted { color: var(--text3); }
+  .project-row-check { width: 14px; height: 14px; border-radius: 3px; border: 1.5px solid var(--border); background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; vertical-align: middle; }
+  .project-row-check.checked { background: var(--navy); border-color: var(--navy); color: white; font-size: 9px; }
+  .project-check-row { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+  .project-check-row:hover { background: var(--surface2); }
+  .project-check-row.sel { background: var(--navy-lt); }
+  .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .filters select { width: auto; min-width: 130px; }
+  .bar-wrap { height: 3px; background: var(--surface2); border-radius: 2px; margin-top: 4px; }
+  .bar { height: 100%; background: var(--navy); border-radius: 2px; }
+  .delete-confirm { font-size: 12px; color: var(--red); }
+  @media(max-width:700px) { .two-col{grid-template-columns:1fr} .kpi-grid{grid-template-columns:repeat(3,1fr)} .form-row-2{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">🏠 Home Command Center</div>
+      <div class="topbar-sub">5 Hunter Cir · Milford, MA</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="openModal('project',null)">+ Project</button>
+  </div>
+  <div class="nav" id="nav"></div>
+  <div class="content" id="content"></div>
+</div>
+<div id="modal-root"></div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+const ROOMS = ['Whole House','Foyer','Dining Room','Den','Kitchen','Great Room','Main Bath','Basement','Primary Bed','Primary Bath','Secondary Bath','Nursery','Guest Room','Sun Room','Exterior/Yard','Garage'];
+const STATUSES = ['Not Started','In Progress','Complete','Blocked','On Hold'];
+const PRIORITIES = ['High','Medium','Low'];
+const EXP_CATS = ['Materials','Labor','Tools','Permits','Design','Landscaping','Appliances','Furniture','General','Other'];
+const MAINT_CATS = ['HVAC','Safety','Exterior','Plumbing','Electrical','Systems','Structural','Maintenance','Appliances'];
+const PREFIXES = {'Whole House':'WH','Foyer':'FYR','Dining Room':'DR','Den':'DEN','Kitchen':'KIT','Great Room':'GR','Main Bath':'MB','Basement':'BAS','Primary Bed':'PBD','Primary Bath':'PBT','Secondary Bath':'SBT','Nursery':'NRS','Guest Room':'GST','Sun Room':'SUN','Exterior/Yard':'EXT','Garage':'GAR'};
+
+const SEED_PROJECTS = [
+  {id:'WH-001',name:'Chimney – Clean & Inspect Before First Use',rooms:['Whole House'],status:'Not Started',priority:'High',estimatedCost:350,notes:'Safety – must do before using fireplace'},
+  {id:'WH-002',name:'Heating Flue – Repair Loose Connection at Chimney',rooms:['Basement','Whole House'],status:'Not Started',priority:'High',estimatedCost:400,notes:'SAFETY – loose flue, gases can enter home'},
+  {id:'WH-003',name:'Doors – Replace Cracked/Broken Glass Panel',rooms:['Whole House'],status:'Not Started',priority:'High',estimatedCost:500,notes:'Safety hazard'},
+  {id:'WH-004',name:'Interior Stairs – Install Continuous Handrail',rooms:['Whole House'],status:'Not Started',priority:'High',estimatedCost:500,notes:'Safety hazard – not continuous'},
+  {id:'WH-005',name:'Windows – Replace Missing Screens',rooms:['Whole House'],status:'Not Started',priority:'Low',estimatedCost:300,notes:''},
+  {id:'WH-006',name:'Doors – Repair Loose/Damaged Thresholds',rooms:['Whole House'],status:'Not Started',priority:'Low',estimatedCost:200,notes:''},
+  {id:'EXT-001',name:'Exterior Stairs – Install Missing Handrail',rooms:['Exterior/Yard'],status:'Not Started',priority:'High',estimatedCost:400,notes:'Safety – stairs with 3+ risers'},
+  {id:'EXT-002',name:'Deck – Repair Loose/Missing Balusters',rooms:['Exterior/Yard'],status:'Not Started',priority:'High',estimatedCost:350,notes:'Safety hazard on guardrail'},
+  {id:'EXT-003',name:'Driveway – Repair Broken/Cracked Sections',rooms:['Exterior/Yard'],status:'Not Started',priority:'Medium',estimatedCost:2500,notes:'Freeze/thaw will worsen'},
+  {id:'EXT-004',name:'Deck – Seal & Finish Surfaces',rooms:['Exterior/Yard'],status:'Not Started',priority:'Medium',estimatedCost:800,notes:'Failing paint/finish on both decks'},
+  {id:'EXT-005',name:'Exterior Siding – Trim Away from Roof Contact',rooms:['Exterior/Yard'],status:'Not Started',priority:'High',estimatedCost:600,notes:'Wicking moisture into siding'},
+  {id:'EXT-006',name:'Landscaping – Enclose Water Feature',rooms:['Exterior/Yard'],status:'Not Started',priority:'High',estimatedCost:600,notes:'Safety hazard for young children'},
+  {id:'EXT-007',name:'Pest – Remove Rodents & Exclusion Plan',rooms:['Whole House'],status:'Not Started',priority:'High',estimatedCost:400,notes:'Mousetraps and dead rodents at inspection'},
+  {id:'BAS-001',name:'Basement – Investigate Odor & Install Dehumidifier',rooms:['Basement'],status:'Not Started',priority:'High',estimatedCost:500,notes:'Possible moisture/microbial issue'},
+  {id:'BAS-002',name:'Basement – Monitor & Repair Floor Cracks',rooms:['Basement'],status:'Not Started',priority:'Low',estimatedCost:200,notes:'Common shrinkage cracks'},
+  {id:'GAR-001',name:'Garage – Repair Non-Functional Door Opener',rooms:['Garage'],status:'Not Started',priority:'Medium',estimatedCost:300,notes:'Not functional at inspection'},
+  {id:'GAR-002',name:'Garage – Repair/Replace Damaged Door Panels',rooms:['Garage'],status:'Not Started',priority:'Medium',estimatedCost:600,notes:''},
+  {id:'KIT-001',name:'Kitchen – Repair/Replace Damaged Cabinets',rooms:['Kitchen'],status:'Not Started',priority:'Medium',estimatedCost:1500,notes:'Visible damage'},
+  {id:'KIT-002',name:'Flooring – Replace Missing Hardwood by Dishwasher',rooms:['Kitchen'],status:'Not Started',priority:'Medium',estimatedCost:600,notes:'Missing section near dishwasher'},
+  {id:'GR-001',name:'Great Room – Furniture Layout',rooms:['Great Room'],status:'In Progress',priority:'High',estimatedCost:2000,notes:'Iterating on room schematics'},
+];
+
+const SEED_MAINT = [
+  {id:'m1',task:'Replace HVAC Filter',category:'HVAC',frequency:'Every 3 months',nextDue:'2026-07-01',status:'Upcoming',notes:'MERV-11 20x25x1'},
+  {id:'m2',task:'HVAC Annual Tune-Up',category:'HVAC',frequency:'Annual',nextDue:'2026-05-01',status:'Upcoming',notes:''},
+  {id:'m3',task:'Clean Gutters & Downspouts',category:'Exterior',frequency:'Spring & Fall',nextDue:'2026-05-15',status:'Upcoming',notes:''},
+  {id:'m4',task:'Test Smoke & CO Detectors',category:'Safety',frequency:'Every 6 months',nextDue:'2026-10-01',status:'Upcoming',notes:''},
+  {id:'m5',task:'Service Water Heater (Flush)',category:'Plumbing',frequency:'Annual',nextDue:'2026-07-01',status:'Upcoming',notes:''},
+  {id:'m6',task:'Clean Chimney & Fireplace',category:'Safety',frequency:'Annual',nextDue:'2026-10-01',status:'Upcoming',notes:'Before first use of season'},
+  {id:'m7',task:'Winterize Irrigation System',category:'Plumbing',frequency:'Annual',nextDue:'2026-10-15',status:'Upcoming',notes:''},
+  {id:'m8',task:'Open Irrigation System',category:'Plumbing',frequency:'Annual',nextDue:'2026-04-15',status:'Upcoming',notes:''},
+  {id:'m9',task:'Pest Inspection',category:'Exterior',frequency:'Annual',nextDue:'2026-05-01',status:'Upcoming',notes:''},
+  {id:'m10',task:'Clean Dryer Vent',category:'Systems',frequency:'Annual',nextDue:'2026-04-15',status:'Upcoming',notes:''},
+  {id:'m11',task:'Check Foundation for Cracks',category:'Structural',frequency:'Annual',nextDue:'2026-05-01',status:'Upcoming',notes:''},
+  {id:'m12',task:'Power Wash Decks',category:'Exterior',frequency:'Annual',nextDue:'2026-05-01',status:'Upcoming',notes:''},
+  {id:'m13',task:'Inspect Roof & Attic',category:'Exterior',frequency:'Annual',nextDue:'2026-05-15',status:'Upcoming',notes:''},
+  {id:'m14',task:'Trim Trees Away from Roof',category:'Exterior',frequency:'Annual',nextDue:'2026-05-01',status:'Upcoming',notes:''},
+  {id:'m15',task:'Inspect Basement for Moisture',category:'Structural',frequency:'Every 3 months',nextDue:'2026-07-01',status:'Upcoming',notes:''},
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let state = { projects: [], expenses: [], maintenance: [], updates: [] };
+let chatHistory = [];
+let currentTab = 'dashboard';
+let isTyping = false;
+
+// ── Storage ───────────────────────────────────────────────────────────────────
+function save() {
+  try { localStorage.setItem('hcc-v4', JSON.stringify(state)); } catch(e) {}
+  try { localStorage.setItem('hcc-chat-v4', JSON.stringify(chatHistory.slice(-40))); } catch(e) {}
+}
+
+function load() {
+  try {
+    const s = localStorage.getItem('hcc-v4');
+    if(s) {
+      const parsed = JSON.parse(s);
+      state.projects = parsed.projects?.length ? parsed.projects : JSON.parse(JSON.stringify(SEED_PROJECTS));
+      state.expenses = parsed.expenses || [];
+      state.maintenance = parsed.maintenance?.length ? parsed.maintenance : JSON.parse(JSON.stringify(SEED_MAINT));
+      state.updates = parsed.updates || [];
+    } else {
+      state.projects = JSON.parse(JSON.stringify(SEED_PROJECTS));
+      state.maintenance = JSON.parse(JSON.stringify(SEED_MAINT));
+    }
+  } catch(e) {
+    state.projects = JSON.parse(JSON.stringify(SEED_PROJECTS));
+    state.maintenance = JSON.parse(JSON.stringify(SEED_MAINT));
+  }
+  try {
+    const c = localStorage.getItem('hcc-chat-v4');
+    if(c) chatHistory = JSON.parse(c);
+  } catch(e) {}
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const fmt$ = n => '$' + Math.round(n||0).toLocaleString();
+const fmtDate = d => { if(!d) return '—'; try { return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e) { return d; } };
+const daysUntil = d => { if(!d) return 999; return Math.ceil((new Date(d) - new Date()) / 86400000); };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const today = () => new Date().toISOString().split('T')[0];
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function statusBadge(s) {
+  const map = {'In Progress':'b-ip','Complete':'b-done','Not Started':'b-ns','Blocked':'b-blocked','On Hold':'b-hold'};
+  return `<span class="badge ${map[s]||'b-ns'}">${esc(s)}</span>`;
+}
+function priBadge(p) {
+  const map = {'High':'pri-high','Medium':'pri-med','Low':'pri-low'};
+  return `<span class="${map[p]||''}">${esc(p||'')}</span>`;
+}
+function dayChip(d, done) {
+  if(done) return `<span class="chip chip-ok">Done</span>`;
+  if(d < 0) return `<span class="chip chip-over">${Math.abs(d)}d overdue</span>`;
+  if(d === 0) return `<span class="chip chip-soon">Today</span>`;
+  if(d <= 14) return `<span class="chip chip-soon">in ${d}d</span>`;
+  return `<span class="chip chip-ok">in ${d}d</span>`;
+}
+function spentForProject(id) {
+  return state.expenses.filter(e => (e.projectIds||[]).includes(id)).reduce((s,e) => s+(e.amount||0), 0);
+}
+
+// ── Render Nav ────────────────────────────────────────────────────────────────
+function renderNav() {
+  const tabs = [['dashboard','Dashboard'],['projects','Projects'],['expenses','Expenses'],['maintenance','Maintenance'],['chat','Chat ✦']];
+  document.getElementById('nav').innerHTML = tabs.map(([id,label]) =>
+    `<button class="nav-btn ${currentTab===id?'active':''}" onclick="setTab('${id}')">${label.toUpperCase()}</button>`
+  ).join('');
+}
+
+function setTab(t) { currentTab = t; renderNav(); renderContent(); }
+
+// ── Render Content ────────────────────────────────────────────────────────────
+function renderContent() {
+  const el = document.getElementById('content');
+  if(currentTab==='dashboard') el.innerHTML = renderDashboard();
+  else if(currentTab==='projects') el.innerHTML = renderProjects();
+  else if(currentTab==='expenses') el.innerHTML = renderExpenses();
+  else if(currentTab==='maintenance') el.innerHTML = renderMaintenance();
+  else if(currentTab==='chat') { el.innerHTML = renderChat(); initChat(); }
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const active = state.projects.filter(p => p.status==='In Progress');
+  const totalSpent = state.expenses.reduce((s,e) => s+(e.amount||0), 0);
+  const totalEst = state.projects.reduce((s,p) => s+(p.estimatedCost||0), 0);
+  const overdue = state.maintenance.filter(m => m.status!=='Complete' && daysUntil(m.nextDue)<0);
+  const upcoming = [...state.maintenance].filter(m => m.status!=='Complete').sort((a,b) => new Date(a.nextDue)-new Date(b.nextDue)).slice(0,7);
+  const recentExp = [...state.expenses].sort((a,b) => new Date(b.date)-new Date(a.date)).slice(0,5);
+  const recentAct = [...state.updates].sort((a,b) => new Date(b.date)-new Date(a.date)).slice(0,4);
+
+  const kpis = [
+    {label:'Active',val:active.length,color:'var(--amber)'},
+    {label:'Spent',val:fmt$(totalSpent),color:'var(--teal)'},
+    {label:'Budget',val:fmt$(totalEst),color:'var(--navy)'},
+    {label:'High Priority',val:state.projects.filter(p=>p.priority==='High'&&p.status!=='Complete').length,color:'var(--red)'},
+    {label:'Overdue',val:overdue.length,color:overdue.length>0?'var(--red)':'var(--green)'},
+    {label:'Complete',val:state.projects.filter(p=>p.status==='Complete').length,color:'var(--green)'},
+  ];
+
+  return `
+    <div class="kpi-grid">
+      ${kpis.map(k=>`<div class="kpi" style="border-top:3px solid ${k.color}"><div class="kpi-val" style="color:${k.color}">${esc(String(k.val))}</div><div class="kpi-label">${k.label}</div></div>`).join('')}
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="section">
+          <div class="section-hdr"><span class="section-title">Active Projects</span></div>
+          ${active.length===0 ? '<div class="empty">No active projects — flip one to In Progress</div>' :
+            active.map(p => {
+              const spent = spentForProject(p.id);
+              return `<div style="padding:10px 16px;border-bottom:1px solid var(--border)">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                  <div style="font-weight:500;flex:1">${esc(p.name)}</div>
+                  <div class="mono" style="font-weight:500;flex-shrink:0">${spent>0?fmt$(spent):'—'}</div>
+                </div>
+                <div style="font-size:11px;color:var(--text3);margin-top:3px">${esc(p.id)} · ${esc((p.rooms||[]).join(', '))} · ${priBadge(p.priority)}</div>
+              </div>`;
+            }).join('')
+          }
+        </div>
+        <div class="section">
+          <div class="section-hdr"><span class="section-title">Recent Activity</span></div>
+          ${recentAct.length===0 ? '<div class="empty">No updates yet — use the Chat tab</div>' :
+            recentAct.map(u => `<div style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px"><div style="font-size:11px;color:var(--text3);font-family:var(--ffm);margin-bottom:2px">${fmtDate(u.date)}</div>${esc(u.text)}</div>`).join('')
+          }
+        </div>
+      </div>
+      <div>
+        <div class="section">
+          <div class="section-hdr"><span class="section-title">Upcoming Maintenance</span></div>
+          ${upcoming.length===0 ? '<div class="empty">All caught up</div>' :
+            upcoming.map(m => {
+              const d = daysUntil(m.nextDue);
+              return `<div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <div><div style="font-size:13px">${esc(m.task)}</div><div style="font-size:11px;color:var(--text3)">${esc(m.category)}</div></div>
+                ${dayChip(d, false)}
+              </div>`;
+            }).join('')
+          }
+        </div>
+        <div class="section">
+          <div class="section-hdr"><span class="section-title">Recent Expenses</span><button class="btn btn-sm btn-primary" onclick="openModal('expense',null)">+ Add</button></div>
+          ${recentExp.length===0 ? '<div class="empty">No expenses yet</div>' :
+            recentExp.map(e => `<div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <div><div style="font-size:13px">${esc(e.description||'Expense')}</div><div style="font-size:11px;color:var(--text3)">${esc((e.projectIds||[]).join(', ')||'General')} · ${esc(e.category||'')}</div></div>
+              <div class="mono" style="font-weight:500;flex-shrink:0">${fmt$(e.amount)}</div>
+            </div>`).join('')
+          }
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Projects ──────────────────────────────────────────────────────────────────
+let projFilters = {status:'',room:'',priority:''};
+function renderProjects() {
+  let list = state.projects;
+  if(projFilters.status) list = list.filter(p => p.status===projFilters.status);
+  if(projFilters.room) list = list.filter(p => (p.rooms||[]).includes(projFilters.room));
+  if(projFilters.priority) list = list.filter(p => p.priority===projFilters.priority);
+
+  const selStyle = `style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);font-family:var(--ffm)"`;
+
+  return `
+    <div class="filters">
+      <select ${selStyle} onchange="projFilters.status=this.value;renderContent()">
+        <option value="">All Statuses</option>
+        ${STATUSES.map(s=>`<option value="${s}" ${projFilters.status===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+      <select ${selStyle} onchange="projFilters.room=this.value;renderContent()">
+        <option value="">All Rooms</option>
+        ${ROOMS.map(r=>`<option value="${r}" ${projFilters.room===r?'selected':''}>${r}</option>`).join('')}
+      </select>
+      <select ${selStyle} onchange="projFilters.priority=this.value;renderContent()">
+        <option value="">All Priorities</option>
+        ${PRIORITIES.map(p=>`<option value="${p}" ${projFilters.priority===p?'selected':''}>${p}</option>`).join('')}
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="openModal('project',null)">+ Add Project</button>
+      <span style="margin-left:auto;font-size:11px;color:var(--text3);font-family:var(--ffm)">${list.length}/${state.projects.length}</span>
+    </div>
+    <div class="section">
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>ID</th><th>Project Name</th><th>Room(s)</th><th>Priority</th><th>Status</th><th>Est. Cost</th><th>Spent</th><th></th></tr></thead>
+          <tbody>
+            ${list.length===0 ? '<tr><td colspan="8" class="empty">No projects match filter</td></tr>' :
+              list.map(p => `<tr>
+                <td class="mono muted" style="font-size:11px;white-space:nowrap">${esc(p.id)}</td>
+                <td><div style="font-weight:500">${esc(p.name)}</div>${p.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(p.notes)}</div>`:''}</td>
+                <td class="muted" style="font-size:12px;white-space:nowrap">${esc((p.rooms||[]).join(', '))}</td>
+                <td>${priBadge(p.priority)}</td>
+                <td>${statusBadge(p.status)}</td>
+                <td class="mono">${fmt$(p.estimatedCost)}</td>
+                <td class="mono">${spentForProject(p.id)>0?fmt$(spentForProject(p.id)):'—'}</td>
+                <td><button class="btn btn-sm" onclick="openModal('project','${esc(p.id)}')">Edit</button></td>
+              </tr>`).join('')
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ── Expenses ──────────────────────────────────────────────────────────────────
+function renderExpenses() {
+  const total = state.expenses.reduce((s,e) => s+(e.amount||0), 0);
+  const sorted = [...state.expenses].sort((a,b) => new Date(b.date)-new Date(a.date));
+  const byProj = {};
+  state.expenses.forEach(e => {
+    if((e.projectIds||[]).length) e.projectIds.forEach(id => { byProj[id]=(byProj[id]||0)+(e.amount||0); });
+    else byProj['__general']=(byProj['__general']||0)+(e.amount||0);
+  });
+
+  return `
+    <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
+      <div style="flex:1;font-size:13px;color:var(--text3)">Total logged: <strong style="color:var(--text)">${fmt$(total)}</strong></div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('expense',null)">+ Log Expense</button>
+    </div>
+    <div class="two-col">
+      <div class="section">
+        <div class="section-hdr"><span class="section-title">All Expenses</span></div>
+        ${sorted.length===0 ? '<div class="empty">No expenses yet</div>' : `
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Date</th><th>Description</th><th>Projects</th><th>Category</th><th>Amount</th><th></th></tr></thead>
+          <tbody>
+            ${sorted.map(e => `<tr>
+              <td class="mono muted" style="font-size:11px;white-space:nowrap">${fmtDate(e.date)}</td>
+              <td>${esc(e.description||'Expense')}</td>
+              <td>${(e.projectIds||[]).length>0 ? (e.projectIds||[]).map(id=>`<span class="tag">${esc(id)}</span>`).join('') : '<span class="muted" style="font-size:12px">General</span>'}</td>
+              <td class="muted" style="font-size:12px">${esc(e.category||'—')}</td>
+              <td class="mono" style="font-weight:500">${fmt$(e.amount)}</td>
+              <td><button onclick="deleteExpense('${e.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0 4px">✕</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table></div>`}
+      </div>
+      <div class="section">
+        <div class="section-hdr"><span class="section-title">By Project</span></div>
+        ${Object.keys(byProj).length===0 ? '<div class="empty">Tag expenses to see breakdown</div>' :
+          Object.entries(byProj).sort((a,b)=>b[1]-a[1]).map(([id,amt]) => {
+            const p = state.projects.find(x=>x.id===id);
+            const pct = total>0 ? Math.round((amt/total)*100) : 0;
+            const name = id==='__general' ? 'General / Untagged' : (p?p.name:id);
+            return `<div style="padding:10px 16px;border-bottom:1px solid var(--border)">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+                <span class="mono" style="font-size:11px;color:var(--navy)">${esc(id==='__general'?'—':id)}</span>
+                <span class="mono" style="font-weight:500">${fmt$(amt)}</span>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:5px">${esc(name)}</div>
+              <div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div>
+            </div>`;
+          }).join('')
+        }
+      </div>
+    </div>`;
+}
+
+function deleteExpense(id) {
+  state.expenses = state.expenses.filter(e => e.id!==id);
+  save(); renderContent();
+}
+
+// ── Maintenance ───────────────────────────────────────────────────────────────
+function renderMaintenance() {
+  const sorted = [...state.maintenance].sort((a,b) => {
+    if(a.status==='Complete'&&b.status!=='Complete') return 1;
+    if(b.status==='Complete'&&a.status!=='Complete') return -1;
+    return new Date(a.nextDue)-new Date(b.nextDue);
+  });
+  const pending = state.maintenance.filter(m=>m.status!=='Complete').length;
+  return `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+      <button class="btn btn-primary btn-sm" onclick="openModal('maint',null)">+ Add Task</button>
+    </div>
+    <div class="section">
+      <div class="section-hdr"><span class="section-title">${pending} Pending Tasks</span></div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Task</th><th>Category</th><th>Frequency</th><th>Next Due</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${sorted.map(m => {
+            const d = daysUntil(m.nextDue);
+            const done = m.status==='Complete';
+            return `<tr style="opacity:${done?0.5:1}">
+              <td><div style="font-weight:500">${esc(m.task)}</div>${m.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(m.notes)}</div>`:''}</td>
+              <td class="muted" style="font-size:12px">${esc(m.category)}</td>
+              <td class="muted" style="font-size:12px">${esc(m.frequency)}</td>
+              <td class="mono" style="font-size:12px;white-space:nowrap">${fmtDate(m.nextDue)}</td>
+              <td>${dayChip(d, done)}</td>
+              <td><button class="btn btn-sm" onclick="toggleMaint('${m.id}')">${done?'Undo':'✓ Done'}</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+}
+
+function toggleMaint(id) {
+  const m = state.maintenance.find(x => x.id===id);
+  if(m) m.status = m.status==='Complete' ? 'Upcoming' : 'Complete';
+  save(); renderContent();
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+function renderChat() {
+  return `
+    <div class="chat-wrap">
+      <div class="chat-msgs" id="chat-msgs">
+        ${chatHistory.length===0 ? `
+          <div class="msg msg-ai">
+            <div class="msg-bubble">Hi Danny! I'm your home assistant for 5 Hunter Cir. Tell me what's happening and I'll update your tracker.\n\nTry things like:\n"Painted the den and dining room today, kitchen tomorrow. Bought 2 cans of paint for $100"\n"Mark the garage door opener as in progress"\n"What's still outstanding in the basement?"</div>
+            <div class="chat-suggestions">
+              <span class="chat-sug" onclick="quickSend('What high priority items are still not started?')">High priority items?</span>
+              <span class="chat-sug" onclick="quickSend('What maintenance is coming up this month?')">Upcoming maintenance?</span>
+              <span class="chat-sug" onclick="quickSend('How much have I spent so far?')">Total spent?</span>
+            </div>
+          </div>
+        ` : chatHistory.map(m => `
+          <div class="msg ${m.role==='user'?'msg-user':'msg-ai'}">
+            <div class="msg-bubble">${esc(m.content)}</div>
+          </div>
+        `).join('')}
+        ${isTyping ? `<div class="msg msg-ai"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>` : ''}
+      </div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" id="chat-input" placeholder="Tell me what happened today..." rows="1"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendChat()" ${isTyping?'disabled':''}>▶</button>
+      </div>
+    </div>`;
+}
+
+function initChat() {
+  const inp = document.getElementById('chat-input');
+  if(inp) {
+    inp.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} });
+    inp.focus();
+  }
+  scrollChatBottom();
+}
+
+function scrollChatBottom() {
+  const el = document.getElementById('chat-msgs');
+  if(el) el.scrollTop = el.scrollHeight;
+}
+
+function quickSend(text) {
+  const inp = document.getElementById('chat-input');
+  if(inp) inp.value = text;
+  sendChat();
+}
+
+async function sendChat() {
+  const inp = document.getElementById('chat-input');
+  if(!inp||isTyping) return;
+  const text = inp.value.trim();
+  if(!text) return;
+  inp.value = '';
+  chatHistory.push({role:'user',content:text});
+  isTyping = true;
+  renderContent();
+
+  const sys = `You are a home assistant for Danny at 5 Hunter Cir, Milford MA. Help track projects, log expenses, update maintenance through natural conversation.
+
+PROJECTS (${state.projects.length}):
+${state.projects.map(p=>`[${p.id}] ${p.name} | ${(p.rooms||[]).join('+')} | ${p.status} | ${p.priority} | $${p.estimatedCost||0}`).join('\n')}
+
+EXPENSES (${state.expenses.length}, $${state.expenses.reduce((s,e)=>s+(e.amount||0),0)} spent):
+${state.expenses.slice(-5).map(e=>`$${e.amount} ${e.description||''} (${(e.projectIds||[]).join(',')||'general'})`).join('\n')||'none yet'}
+
+MAINTENANCE (pending):
+${state.maintenance.filter(m=>m.status!=='Complete').sort((a,b)=>new Date(a.nextDue)-new Date(b.nextDue)).slice(0,6).map(m=>`[${m.id}] ${m.task} due ${m.nextDue}`).join('\n')}
+
+To take actions, include JSON actions in <actions> tags, one per line:
+{"type":"update_project","id":"GR-001","status":"Complete"}
+{"type":"log_expense","description":"Paint","amount":100,"category":"Materials","projectIds":["GR-001","DEN-001"],"date":"${today()}"}
+{"type":"add_project","id":"KIT-003","name":"...","rooms":["Kitchen"],"status":"Not Started","priority":"Medium","estimatedCost":300,"notes":""}
+{"type":"add_update","text":"Painted den today","date":"${today()}"}
+{"type":"complete_maintenance","id":"m1"}
+
+Be brief and conversational. Extract exact dollar amounts. Tag expenses to all projects mentioned. Use projectIds:[] for general expenses. Today is ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: sys,
+        messages: chatHistory.slice(-12).map(m=>({role:m.role,content:m.content}))
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || "Sorry, couldn't process that.";
+    const actionMatch = raw.match(/<actions>([\s\S]*?)<\/actions>/);
+    const display = raw.replace(/<actions>[\s\S]*?<\/actions>/g,'').trim();
+
+    if(actionMatch) {
+      const lines = actionMatch[1].trim().split('\n').filter(l=>l.trim().startsWith('{'));
+      for(const line of lines) {
+        try { applyAction(JSON.parse(line)); } catch(e) {}
+      }
+    }
+    chatHistory.push({role:'assistant',content:display});
+    save();
+  } catch(e) {
+    chatHistory.push({role:'assistant',content:'Connection issue — please try again.'});
+  }
+
+  isTyping = false;
+  renderContent();
+}
+
+function applyAction(a) {
+  if(a.type==='update_project') {
+    const p = state.projects.find(x => x.id===a.id || x.name?.toLowerCase().includes((a.name||'').toLowerCase().slice(0,12)));
+    if(p) { if(a.status)p.status=a.status; if(a.priority)p.priority=a.priority; if(a.notes)p.notes=a.notes; }
+  } else if(a.type==='log_expense') {
+    state.expenses.push({...a, id:'e'+uid(), type:undefined, date:a.date||today()});
+  } else if(a.type==='add_project') {
+    if(!state.projects.find(p=>p.id===a.id)) state.projects.push({...a, type:undefined, createdAt:new Date().toISOString()});
+  } else if(a.type==='add_update') {
+    state.updates.push({...a, id:'u'+uid(), type:undefined, date:a.date||new Date().toISOString()});
+  } else if(a.type==='complete_maintenance') {
+    const m = state.maintenance.find(x => x.id===a.id || x.task?.toLowerCase().includes((a.task||'').toLowerCase().slice(0,8)));
+    if(m) m.status='Complete';
+  }
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+let modalSelectedRooms = [];
+let modalSelectedProjects = [];
+let editingId = null;
+let confirmingDelete = false;
+
+function openModal(type, id) {
+  editingId = id;
+  confirmingDelete = false;
+  const root = document.getElementById('modal-root');
+
+  if(type==='project') {
+    const p = id ? state.projects.find(x=>x.id===id) : null;
+    modalSelectedRooms = p ? [...(p.rooms||[])] : [];
+    root.innerHTML = `
+      <div class="modal-bg" onclick="if(event.target===this)closeModal()">
+        <div class="modal">
+          <div class="modal-title">${p?`Edit: ${esc(p.id)}`:'Add Project'}</div>
+          <div class="form-field"><label class="form-label">Project Name *</label><input id="m-name" value="${esc(p?.name||'')}" placeholder="e.g. Repaint kitchen walls"></div>
+          <div class="form-row-2">
+            <div class="form-field"><label class="form-label">Priority</label>
+              <select id="m-pri">${PRIORITIES.map(x=>`<option ${(p?.priority||'Medium')===x?'selected':''}>${x}</option>`).join('')}</select>
+            </div>
+            <div class="form-field"><label class="form-label">Status</label>
+              <select id="m-status">${STATUSES.map(x=>`<option ${(p?.status||'Not Started')===x?'selected':''}>${x}</option>`).join('')}</select>
+            </div>
+          </div>
+          <div class="form-field"><label class="form-label">Est. Cost ($)</label><input id="m-cost" type="number" value="${esc(String(p?.estimatedCost||''))}" placeholder="0"></div>
+          <div class="form-field">
+            <label class="form-label">Room(s) — select all that apply</label>
+            <div class="room-pills" id="room-pills">
+              ${ROOMS.map(r=>`<span class="room-pill ${modalSelectedRooms.includes(r)?'sel':''}" onclick="toggleModalRoom('${r}')">${r}</span>`).join('')}
+            </div>
+          </div>
+          <div class="form-field"><label class="form-label">Notes</label><input id="m-notes" value="${esc(p?.notes||'')}" placeholder="Optional notes"></div>
+          <div class="modal-footer">
+            <div>${p?`<button class="btn btn-danger btn-sm" id="del-btn" onclick="confirmDelete()">${confirmingDelete?'Click again to confirm':'Delete'}</button>`:''}</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn" onclick="closeModal()">Cancel</button>
+              <button class="btn btn-primary" onclick="saveProject()">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  else if(type==='expense') {
+    modalSelectedProjects = [];
+    root.innerHTML = `
+      <div class="modal-bg" onclick="if(event.target===this)closeModal()">
+        <div class="modal" style="max-width:480px">
+          <div class="modal-title">Log Expense</div>
+          <div class="form-field"><label class="form-label">Description</label><input id="e-desc" placeholder="e.g. 2 gallons paint, HVAC filter"></div>
+          <div class="form-row-2">
+            <div class="form-field"><label class="form-label">Amount ($)</label><input id="e-amount" type="number" placeholder="0.00"></div>
+            <div class="form-field"><label class="form-label">Date</label><input id="e-date" type="date" value="${today()}"></div>
+          </div>
+          <div class="form-field"><label class="form-label">Category</label>
+            <select id="e-cat">${EXP_CATS.map(c=>`<option>${c}</option>`).join('')}</select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Tag to Project(s) — optional</label>
+            <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px">
+              ${state.projects.map(p=>`
+                <div class="project-check-row" id="prow-${p.id}" onclick="toggleExpProj('${p.id}')">
+                  <div class="project-row-check" id="pcheck-${p.id}"></div>
+                  <span class="mono" style="font-size:11px;color:var(--navy);min-width:60px;flex-shrink:0">${esc(p.id)}</span>
+                  <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</span>
+                </div>`).join('')}
+            </div>
+            <div id="tagged-count" style="font-size:11px;color:var(--text3);margin-top:4px;font-family:var(--ffm)"></div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveExpense()">Log Expense</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  else if(type==='maint') {
+    root.innerHTML = `
+      <div class="modal-bg" onclick="if(event.target===this)closeModal()">
+        <div class="modal" style="max-width:440px">
+          <div class="modal-title">Add Maintenance Task</div>
+          <div class="form-field"><label class="form-label">Task</label><input id="mt-task" placeholder="e.g. Clean dryer vent"></div>
+          <div class="form-row-2">
+            <div class="form-field"><label class="form-label">Category</label><select id="mt-cat">${MAINT_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+            <div class="form-field"><label class="form-label">Frequency</label><input id="mt-freq" value="Annual" placeholder="Annual"></div>
+          </div>
+          <div class="form-field"><label class="form-label">Next Due</label><input id="mt-due" type="date"></div>
+          <div class="form-field"><label class="form-label">Notes</label><input id="mt-notes" placeholder="Optional"></div>
+          <div class="modal-footer">
+            <button class="btn" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveMaint()">Add Task</button>
+          </div>
+        </div>
+      </div>`;
+  }
+}
+
+function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
+
+function toggleModalRoom(r) {
+  if(modalSelectedRooms.includes(r)) modalSelectedRooms = modalSelectedRooms.filter(x=>x!==r);
+  else modalSelectedRooms.push(r);
+  document.querySelectorAll('.room-pill').forEach(el => {
+    el.classList.toggle('sel', modalSelectedRooms.includes(el.textContent));
+  });
+}
+
+function toggleExpProj(id) {
+  if(modalSelectedProjects.includes(id)) modalSelectedProjects = modalSelectedProjects.filter(x=>x!==id);
+  else modalSelectedProjects.push(id);
+  const row = document.getElementById(`prow-${id}`);
+  const chk = document.getElementById(`pcheck-${id}`);
+  if(row) row.classList.toggle('sel', modalSelectedProjects.includes(id));
+  if(chk) { chk.classList.toggle('checked', modalSelectedProjects.includes(id)); chk.textContent = modalSelectedProjects.includes(id)?'✓':''; }
+  const cnt = document.getElementById('tagged-count');
+  if(cnt) cnt.textContent = modalSelectedProjects.length>0 ? `${modalSelectedProjects.length} project${modalSelectedProjects.length>1?'s':''} tagged` : '';
+}
+
+function confirmDelete() {
+  if(!confirmingDelete) {
+    confirmingDelete = true;
+    const btn = document.getElementById('del-btn');
+    if(btn) { btn.textContent='Confirm Delete'; btn.style.background='var(--red)'; btn.style.color='white'; }
+  } else {
+    state.projects = state.projects.filter(p => p.id !== editingId);
+    save(); closeModal(); renderContent();
+  }
+}
+
+function saveProject() {
+  const name = document.getElementById('m-name').value.trim();
+  if(!name) return;
+  const status = document.getElementById('m-status').value;
+  const priority = document.getElementById('m-pri').value;
+  const cost = parseFloat(document.getElementById('m-cost').value)||0;
+  const notes = document.getElementById('m-notes').value.trim();
+
+  if(editingId) {
+    const idx = state.projects.findIndex(p => p.id===editingId);
+    if(idx>=0) state.projects[idx] = {...state.projects[idx], name, status, priority, estimatedCost:cost, notes, rooms:modalSelectedRooms};
+  } else {
+    const room = modalSelectedRooms[0]||'Whole House';
+    const pfx = PREFIXES[room]||'WH';
+    const id = `${pfx}-${uid().slice(-4).toUpperCase()}`;
+    state.projects.push({id, name, status, priority, estimatedCost:cost, notes, rooms:modalSelectedRooms, createdAt:new Date().toISOString()});
+  }
+  save(); closeModal(); renderContent();
+}
+
+function saveExpense() {
+  const amount = parseFloat(document.getElementById('e-amount').value)||0;
+  if(!amount) return;
+  state.expenses.push({
+    id: 'e'+uid(),
+    description: document.getElementById('e-desc').value.trim(),
+    amount,
+    date: document.getElementById('e-date').value,
+    category: document.getElementById('e-cat').value,
+    projectIds: [...modalSelectedProjects]
+  });
+  save(); closeModal(); renderContent();
+}
+
+function saveMaint() {
+  const task = document.getElementById('mt-task').value.trim();
+  if(!task) return;
+  state.maintenance.push({
+    id: 'm'+uid(),
+    task,
+    category: document.getElementById('mt-cat').value,
+    frequency: document.getElementById('mt-freq').value,
+    nextDue: document.getElementById('mt-due').value,
+    status: 'Upcoming',
+    notes: document.getElementById('mt-notes').value.trim()
+  });
+  save(); closeModal(); renderContent();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+load();
+renderNav();
+renderContent();
+</script>
+</body>
+</html>
